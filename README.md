@@ -43,6 +43,33 @@ Backend do projeto Monitoolring: Java 21, Spring Boot 3, Maven.
    GET http://localhost:8080/api/health
    ```
 
+## Rodando com Docker
+
+Pré-requisito: Docker instalado (com Docker Compose).
+
+Este projeto e o [frontend](https://github.com/MRanderle/monitoolring--frontend) compartilham a rede externa `monitoolring-network` para poderem se comunicar entre containers. Crie-a uma vez (se ainda não existir):
+
+```bash
+docker network create monitoolring-network
+```
+
+Depois, suba o backend:
+
+```bash
+docker compose up --build
+```
+
+API disponível em `http://localhost:8080/api/health`.
+
+Para rodar apenas com Docker (sem compose):
+
+```bash
+docker build -t monitoolring-backend .
+docker run -p 8080:8080 monitoolring-backend
+```
+
+> Para o frontend (em outro repositório) conseguir chamar este backend quando ambos rodam em containers, suba os dois via `docker compose up` — eles compartilham a rede externa `monitoolring-network`, e o backend fica acessível em `http://monitoolring-backend:8080` a partir de outros containers dessa rede.
+
 ## Comandos úteis
 
 | Comando                  | Descrição                          |
