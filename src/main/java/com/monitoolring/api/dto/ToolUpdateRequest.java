@@ -1,30 +1,24 @@
 package com.monitoolring.api.dto;
 
-import java.math.BigDecimal;
-
-import com.monitoolring.api.enums.ToolStatus;
-
-import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ToolUpdateRequest(
+        @NotBlank(message = "codigo é obrigatório")
+        @Size(max = 18, message = "codigo deve ter no máximo 18 caracteres")
+        String codigo,
 
-        @NotNull(message = "version é obrigatório")
-        Integer version,
-
+        @NotBlank(message = "nome é obrigatório")
         @Size(max = 255, message = "nome deve ter no máximo 255 caracteres")
         String nome,
 
-        @Size(max = 100, message = "categoria deve ter no máximo 100 caracteres")
-        String categoria,
+        @NotNull(message = "quantidade é obrigatória")
+        @Min(value = 0, message = "quantidade deve ser maior ou igual a zero")
+        Integer quantidade,
 
-        @DecimalMin(value = "0.01", message = "valorEstimado deve ser maior que zero")
-        BigDecimal valorEstimado,
-
-        @Size(max = 255, message = "estadoConservacao deve ter no máximo 255 caracteres")
-        String estadoConservacao,
-
-        ToolStatus status
+        @NotNull(message = "versao é obrigatória")
+        Integer versao
 ) {
 }

@@ -1,99 +1,106 @@
 package com.monitoolring.api.domain;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.monitoolring.api.enums.ToolStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
+@Entity
+@Table(name = "ferramentas")
 public class Tool {
 
-    private final String id;
-    private String identificador;
-    private String nome;
-    private String categoria;
-    private BigDecimal valorEstimado;
-    private String estadoConservacao;
-    private ToolStatus status;
-    private int version;
-    private final Instant createdAt;
-    private Instant updatedAt;
+    @Id
+    @Column(name = "id", length = 38, nullable = false, updatable = false)
+    private String id;
 
-    public Tool(String id, String identificador, String nome, String categoria,
-                BigDecimal valorEstimado, String estadoConservacao) {
+    @Column(name = "codigo", length = 18, nullable = false, unique = true)
+    private String codigo;
+
+    @Column(name = "nome", length = 255, nullable = false)
+    private String nome;
+
+    @Column(name = "quantidade", nullable = false)
+    private int quantidade;
+
+    @Column(name = "id_usuario_criacao", length = 38, nullable = false, updatable = false)
+    private String idUsuarioCriacao;
+
+    @Column(name = "data_hora_criacao", nullable = false, updatable = false)
+    private Instant dataHoraCriacao;
+
+    @Column(name = "id_usuario_alteracao", length = 38, nullable = false)
+    private String idUsuarioAlteracao;
+
+    @Column(name = "data_hora_alteracao", nullable = false)
+    private Instant dataHoraAlteracao;
+
+    @Version
+    @Column(name = "versao", nullable = false)
+    private int versao;
+
+    protected Tool() {
+        // exigido pelo JPA
+    }
+
+    private Tool(String id, String codigo, String nome, int quantidade, String idUsuario, Instant now) {
         this.id = id;
-        this.identificador = identificador;
+        this.codigo = codigo;
         this.nome = nome;
-        this.categoria = categoria;
-        this.valorEstimado = valorEstimado;
-        this.estadoConservacao = estadoConservacao;
-        this.status = ToolStatus.DISPONIVEL;
-        this.version = 0;
-        this.createdAt = Instant.now();
-        this.updatedAt = this.createdAt;
+        this.quantidade = quantidade;
+        this.idUsuarioCriacao = idUsuario;
+        this.dataHoraCriacao = now;
+        this.idUsuarioAlteracao = idUsuario;
+        this.dataHoraAlteracao = now;
+    }
+
+    public static Tool criar(String id, String codigo, String nome, int quantidade, String idUsuario, Instant now) {
+        return new Tool(id, codigo, nome, quantidade, idUsuario, now);
+    }
+
+    public void aplicarEdicao(String codigo, String nome, int quantidade, String idUsuario, Instant now) {
+        this.codigo = codigo;
+        this.nome = nome;
+        this.quantidade = quantidade;
+        this.idUsuarioAlteracao = idUsuario;
+        this.dataHoraAlteracao = now;
     }
 
     public String getId() {
         return id;
     }
 
-    public String getIdentificador() {
-        return identificador;
+    public String getCodigo() {
+        return codigo;
     }
 
     public String getNome() {
         return nome;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public int getQuantidade() {
+        return quantidade;
     }
 
-    public String getCategoria() {
-        return categoria;
+    public String getIdUsuarioCriacao() {
+        return idUsuarioCriacao;
     }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
+    public Instant getDataHoraCriacao() {
+        return dataHoraCriacao;
     }
 
-    public BigDecimal getValorEstimado() {
-        return valorEstimado;
+    public String getIdUsuarioAlteracao() {
+        return idUsuarioAlteracao;
     }
 
-    public void setValorEstimado(BigDecimal valorEstimado) {
-        this.valorEstimado = valorEstimado;
+    public Instant getDataHoraAlteracao() {
+        return dataHoraAlteracao;
     }
 
-    public String getEstadoConservacao() {
-        return estadoConservacao;
-    }
-
-    public void setEstadoConservacao(String estadoConservacao) {
-        this.estadoConservacao = estadoConservacao;
-    }
-
-    public ToolStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ToolStatus status) {
-        this.status = status;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public void touch() {
-        this.version++;
-        this.updatedAt = Instant.now();
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
+    public int getVersao() {
+        return versao;
     }
 }

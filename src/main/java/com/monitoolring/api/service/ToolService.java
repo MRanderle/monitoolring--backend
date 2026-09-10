@@ -1,17 +1,16 @@
 package com.monitoolring.api.service;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import com.monitoolring.api.domain.Tool;
 import com.monitoolring.api.dto.ToolCreateRequest;
 import com.monitoolring.api.dto.ToolUpdateRequest;
-import com.monitoolring.api.enums.ToolStatus;
-import com.monitoolring.api.exception.DuplicateToolIdentifierException;
-import com.monitoolring.api.exception.InvalidToolStatusTransitionException;
+import com.monitoolring.api.exception.DuplicateToolCodigoException;
 import com.monitoolring.api.exception.ToolNotFoundException;
 import com.monitoolring.api.exception.ToolVersionConflictException;
 import com.monitoolring.api.repository.ToolRepository;
@@ -20,26 +19,18 @@ import com.monitoolring.api.repository.ToolRepository;
 public class ToolService {
 
     private final ToolRepository toolRepository;
-    private final Object writeLock = new Object();
 
     public ToolService(ToolRepository toolRepository) {
         this.toolRepository = toolRepository;
     }
 
-    public Tool create(ToolCreateRequest request) {
-        synchronized (writeLock) {
-            assertIdentificadorAvailable(request.identificador());
+    public Tool create(ToolCreateRequest request, String idUsuario) {
+        assertCodigoAvailable(request.codigo());
 
-            Tool tool = new Tool(
-                    UUID.randomUUID().toString(),
-                    request.identificador(),
-                    request.nome(),
-                    request.categoria(),
-                    request.valorEstimado(),
-                    request.estadoConservacao()
-            );
-            return toolRepository.save(tool);
-        }
+        Instant now = Instant.now();
+        Tool tool = Tool.criar(UUID.randomUUID().toString(), request.codigo(), request.nome(),
+                request.quantidade(), idUsuario, now);
+        return toolRepository.save(tool);
     }
 
     public List<Tool> findAll() {
@@ -51,45 +42,34 @@ public class ToolService {
                 .orElseThrow(() -> new ToolNotFoundException(id));
     }
 
-    public Tool update(String id, ToolUpdateRequest request) {
-        synchronized (writeLock) {
-            Tool tool = findById(id);
-            assertVersionMatches(tool, request.version());
+    public Tool update(String id, ToolUpdateRequest request, String idUsuario) {
+        Tool tool = findById(id);
+        assertVersionMatches(tool, request.versao());
+        assertCodigoAvailableForOtherTool(request.codigo(), id);
 
-            applyEditableFields(tool, request);
-            applyInactivationIfRequested(tool, request.status());
-
-            tool.touch();
-            return toolRepository.save(tool);
+        tool.aplicarEdicao(request.codigo(), request.nome(), request.quantidade(), idUsuario, Instant.now());
+        try {
+            return toolRepository.saveAndFlush(tool);
+        } catch (OptimisticLockingFailureException ex) {
+            throw new ToolVersionConflictException(id, request.versao(), tool.getVersao());
         }
     }
 
-    private void assertIdentificadorAvailable(String identificador) {
-        toolRepository.findByIdentificador(identificador).ifPresent(existing -> {
-            throw new DuplicateToolIdentifierException(identificador);
-        });
+    private void assertCodigoAvailable(String codigo) {
+        if (toolRepository.existsByCodigo(codigo)) {
+            throw new DuplicateToolCodigoException(codigo);
+        }
+    }
+
+    private void assertCodigoAvailableForOtherTool(String codigo, String id) {
+        if (toolRepository.existsByCodigoAndIdNot(codigo, id)) {
+            throw new DuplicateToolCodigoException(codigo);
+        }
     }
 
     private void assertVersionMatches(Tool tool, int expectedVersion) {
-        if (tool.getVersion() != expectedVersion) {
-            throw new ToolVersionConflictException(tool.getId(), expectedVersion, tool.getVersion());
+        if (tool.getVersao() != expectedVersion) {
+            throw new ToolVersionConflictException(tool.getId(), expectedVersion, tool.getVersao());
         }
-    }
-
-    private void applyEditableFields(Tool tool, ToolUpdateRequest request) {
-        Optional.ofNullable(request.nome()).ifPresent(tool::setNome);
-        Optional.ofNullable(request.categoria()).ifPresent(tool::setCategoria);
-        Optional.ofNullable(request.valorEstimado()).ifPresent(tool::setValorEstimado);
-        Optional.ofNullable(request.estadoConservacao()).ifPresent(tool::setEstadoConservacao);
-    }
-
-    private void applyInactivationIfRequested(Tool tool, ToolStatus requestedStatus) {
-        if (requestedStatus == null) {
-            return;
-        }
-        if (requestedStatus != ToolStatus.INATIVA) {
-            throw new InvalidToolStatusTransitionException(requestedStatus);
-        }
-        tool.setStatus(ToolStatus.INATIVA);
     }
 }

@@ -2,6 +2,7 @@ package com.monitoolring.api.controller;
 
 import java.util.List;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,8 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.monitoolring.api.dto.ErrorResponse;
-import com.monitoolring.api.exception.DuplicateToolIdentifierException;
-import com.monitoolring.api.exception.InvalidToolStatusTransitionException;
+import com.monitoolring.api.exception.DuplicateToolCodigoException;
 import com.monitoolring.api.exception.ToolNotFoundException;
 import com.monitoolring.api.exception.ToolVersionConflictException;
 
@@ -26,8 +26,8 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(), "Bad Request", "Corpo da requisição inválido", details));
     }
 
-    @ExceptionHandler(InvalidToolStatusTransitionException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(InvalidToolStatusTransitionException ex) {
+    @ExceptionHandler(DuplicateToolCodigoException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateToolCodigoException ex) {
         return ResponseEntity.badRequest().body(ErrorResponse.of(
                 HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage()));
     }
@@ -38,15 +38,16 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage()));
     }
 
-    @ExceptionHandler(DuplicateToolIdentifierException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateToolIdentifierException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
-                HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage()));
-    }
-
     @ExceptionHandler(ToolVersionConflictException.class)
     public ResponseEntity<ErrorResponse> handleVersionConflict(ToolVersionConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
                 HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(OptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), "Conflict",
+                "Ferramenta foi alterada por outra requisição. Recarregue os dados e tente novamente."));
     }
 }

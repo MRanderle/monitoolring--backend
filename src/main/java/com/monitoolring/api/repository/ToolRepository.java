@@ -1,35 +1,12 @@
 package com.monitoolring.api.repository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.monitoolring.api.domain.Tool;
 
-@Repository
-public class ToolRepository {
+public interface ToolRepository extends JpaRepository<Tool, String> {
 
-    private final Map<String, Tool> tools = new ConcurrentHashMap<>();
+    boolean existsByCodigo(String codigo);
 
-    public Tool save(Tool tool) {
-        tools.put(tool.getId(), tool);
-        return tool;
-    }
-
-    public Optional<Tool> findById(String id) {
-        return Optional.ofNullable(tools.get(id));
-    }
-
-    public Optional<Tool> findByIdentificador(String identificador) {
-        return tools.values().stream()
-                .filter(tool -> tool.getIdentificador().equalsIgnoreCase(identificador))
-                .findFirst();
-    }
-
-    public List<Tool> findAll() {
-        return List.copyOf(tools.values());
-    }
+    boolean existsByCodigoAndIdNot(String codigo, String id);
 }
