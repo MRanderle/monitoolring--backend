@@ -63,5 +63,7 @@ src/main/java/com/monitoolring/api/
 ├── dto/                      # Objetos de transferência de dados
 ├── service/                  # Regras de negócio
 ├── repository/               # Acesso a dados
-└── domain/                   # Entidades/modelo de domínio
+├── domain/                   # Entidades/modelo de domínio
+├── enums/                    # Enumerações do domínio
+└── exception/                 # Exceções customizadas
 ```
