@@ -55,6 +55,11 @@ public class ToolService {
         }
     }
 
+    public void delete(String id) {
+        Tool tool = findById(id);
+        toolRepository.delete(tool);
+    }
+
     private void assertCodigoAvailable(String codigo) {
         if (toolRepository.existsByCodigo(codigo)) {
             throw new DuplicateToolCodigoException(codigo);
